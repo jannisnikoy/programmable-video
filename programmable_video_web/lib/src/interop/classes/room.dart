@@ -41,7 +41,7 @@ extension Interop on Room {
           RoomState.DISCONNECTED,
       mediaRegion: EnumToString.fromString<Region>(
         Region.values,
-        mediaRegion,
+        'gll',
       ),
       localParticipant: localParticipant.toModel(),
       remoteParticipants: iteratorToList<RemoteParticipantModel, RemoteParticipant>(
