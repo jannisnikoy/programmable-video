@@ -35,6 +35,7 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
   static final _remoteParticipantController = StreamController<BaseRemoteParticipantEvent>.broadcast();
   static final _remoteDataTrackController = StreamController<BaseRemoteDataTrackEvent>.broadcast();
   static final _loggingStreamController = StreamController<String>.broadcast();
+  static final _audioNotificationStreamController = StreamController<BaseAudioNotificationEvent>.broadcast();
 
   static var _nativeDebug = false;
   static var _sdkDebugSetup = false;
@@ -53,7 +54,8 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
     ui.platformViewRegistry.registerViewFactory('local-video-track-html', (int viewId) {
       final room = _room;
       if (room != null) {
-        final localVideoTrackElement = room.localParticipant.videoTracks.values().next().value.track.attach()..style.objectFit = _getObjectFit(mode);
+        final localVideoTrackElement = room.localParticipant.videoTracks.values().next().value.track.attach()
+          ..style.objectFit = _getObjectFit(mode);
         debug('Created local video track view for: $localParticipantSid');
         return localVideoTrackElement;
       } else {
@@ -65,7 +67,8 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
 
   static void _createRemoteViewFactory(String remoteParticipantSid, String remoteVideoTrackSid, VideoRenderMode mode) {
     ui.platformViewRegistry.registerViewFactory('remote-video-track-#$remoteVideoTrackSid-html', (int viewId) {
-      final remoteVideoTrack = _room?.participants.toDartMap()[remoteParticipantSid]?.videoTracks.toDartMap()[remoteVideoTrackSid]?.track;
+      final remoteVideoTrack =
+          _room?.participants.toDartMap()[remoteParticipantSid]?.videoTracks.toDartMap()[remoteVideoTrackSid]?.track;
       // TODO: flatten this out
       if (remoteVideoTrack != null) {
         final remoteVideoTrackElement = remoteVideoTrack.attach()..style.objectFit = _getObjectFit(mode);
@@ -132,7 +135,8 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
     _roomStreamController.onListen = _onConnected;
 
     final twilioVersion = Version.parse(version);
-    if (twilioVersion.major != supportedVersion.major || (twilioVersion.major == supportedVersion.major && twilioVersion.minor > supportedVersion.minor)) {
+    if (twilioVersion.major != supportedVersion.major ||
+        (twilioVersion.major == supportedVersion.major && twilioVersion.minor > supportedVersion.minor)) {
       throw UnsupportedError('Current supported JS version is: $supportedVersion');
     }
 
@@ -154,7 +158,8 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
     if (localParticipant != null) {
       final audioTracks = localParticipant.audioTracks.values();
       iteratorForEach<LocalAudioTrackPublication>(audioTracks, (publication) {
-        debug('ProgrammableVideoWeb::disconnect => unpublishing ${publication.track.kind} track ${publication.trackSid}');
+        debug(
+            'ProgrammableVideoWeb::disconnect => unpublishing ${publication.track.kind} track ${publication.trackSid}');
         publication.track.stop();
         _room?.localParticipant.unpublishTrack(publication.track);
         return false;
@@ -162,7 +167,8 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
 
       final videoTracks = localParticipant.videoTracks.values();
       iteratorForEach<LocalVideoTrackPublication>(videoTracks, (publication) {
-        debug('ProgrammableVideoWeb::disconnect => unpublishing ${publication.track.kind} track ${publication.trackSid}');
+        debug(
+            'ProgrammableVideoWeb::disconnect => unpublishing ${publication.track.kind} track ${publication.trackSid}');
         publication.track.stop();
         _room?.localParticipant.unpublishTrack(publication.track);
         return false;
@@ -170,7 +176,8 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
 
       final dataTracks = localParticipant.dataTracks.values();
       iteratorForEach<LocalDataTrackPublication>(dataTracks, (publication) {
-        debug('ProgrammableVideoWeb::disconnect => unpublishing ${publication.track.kind} track ${publication.trackSid}');
+        debug(
+            'ProgrammableVideoWeb::disconnect => unpublishing ${publication.track.kind} track ${publication.trackSid}');
         _room?.localParticipant.unpublishTrack(publication.track);
         return false;
       });
@@ -333,6 +340,35 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
     return Future(() => isEnabled);
   }
 
+  // No-op on web as there is no official way to do this on web.
+  @override
+  Future<bool> deviceHasReceiver() {
+    return Future.value(true);
+  }
+
+  /// No-op on web as there is no official way to do this on web.
+  @override
+  Future disableAudioSettings() {
+    return Future.value(true);
+  }
+
+  /// Using default values as there is no official way to do this on web.
+  /// There is a bluetoothDevice browser api but it is not widely supported.
+  /// Speaker defaults to true based on default of deprecated method [setSpeakerphoneOn]
+  @override
+  Future<Map<String, dynamic>> getAudioSettings() {
+    return Future.value({
+      'speakerphoneEnabled': true,
+      'bluetoothPreferred': false,
+    });
+  }
+
+  /// No-op on web as there is no official way to do this on web.
+  @override
+  Future setAudioSettings(bool speakerphoneEnabled, bool bluetoothPreferred) {
+    return Future.value(true);
+  }
+
   static String _getObjectFit(VideoRenderMode mode) {
     switch (mode) {
       case VideoRenderMode.FILL:
@@ -374,6 +410,11 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
   @override
   Stream<dynamic> loggingStream() {
     return _loggingStreamController.stream;
+  }
+
+  @override
+  Stream<BaseAudioNotificationEvent> audioNotificationStream() {
+    return _audioNotificationStreamController.stream;
   }
 //#endregion
 }
