@@ -1,3 +1,9 @@
+## 1.1.2
+
+- Updates maximum supported SDK version to Dart 3.x
+- **Web** Changed JSMap `Iterator` interop fields, and params of `iteratorToList`, and `iteratorForEach` to `dynamic`, to fix an issue after Chromium version 122 was released. Thanks to [Kai Chen @kai1300009](https://gitlab.com/kai1300009) for finding this part of the solution.
+- **Web** Changed video registration for local and remote views according to the [findings](https://gitlab.com/twilio-flutter/programmable-video/-/issues/261#note_1798305671) of [Raphael @CabraKill](https://gitlab.com/CabraKill). Thanks for the implementation.
+
 ## 1.1.1
 
 - Fixed Android build error due to the deprecation of the `kotlin-android-extensions` plugin.
