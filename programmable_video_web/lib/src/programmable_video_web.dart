@@ -35,7 +35,6 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
   static final _remoteParticipantController = StreamController<BaseRemoteParticipantEvent>.broadcast();
   static final _remoteDataTrackController = StreamController<BaseRemoteDataTrackEvent>.broadcast();
   static final _loggingStreamController = StreamController<String>.broadcast();
-  static final _audioNotificationStreamController = StreamController<BaseAudioNotificationEvent>.broadcast();
 
   static var _nativeDebug = false;
   static var _sdkDebugSetup = false;
@@ -55,9 +54,11 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
       final room = _room;
       if (room != null) {
         final localVideoTrackElement = room.localParticipant.videoTracks.values().next().value.track.attach()
+          ..style.width = '100%'
+          ..style.height = '100%'
           ..style.objectFit = _getObjectFit(mode);
         debug('Created local video track view for: $localParticipantSid');
-        return localVideoTrackElement;
+        return DivElement()..append(localVideoTrackElement);
       } else {
         // TODO: review behaviour in scenario where `_room` is `null`.
         return DivElement();
@@ -71,9 +72,12 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
           _room?.participants.toDartMap()[remoteParticipantSid]?.videoTracks.toDartMap()[remoteVideoTrackSid]?.track;
       // TODO: flatten this out
       if (remoteVideoTrack != null) {
-        final remoteVideoTrackElement = remoteVideoTrack.attach()..style.objectFit = _getObjectFit(mode);
+        final remoteVideoTrackElement = remoteVideoTrack.attach()
+          ..style.width = '100%'
+          ..style.height = '100%'
+          ..style.objectFit = _getObjectFit(mode);
         debug('Created remote video track view for: $remoteParticipantSid');
-        return remoteVideoTrackElement;
+        return DivElement()..append(remoteVideoTrackElement);
       } else {
         // TODO: review behaviour in scenario where `_room` is `null`.
         return DivElement();
@@ -340,35 +344,6 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
     return Future(() => isEnabled);
   }
 
-  // No-op on web as there is no official way to do this on web.
-  @override
-  Future<bool> deviceHasReceiver() {
-    return Future.value(true);
-  }
-
-  /// No-op on web as there is no official way to do this on web.
-  @override
-  Future disableAudioSettings() {
-    return Future.value(true);
-  }
-
-  /// Using default values as there is no official way to do this on web.
-  /// There is a bluetoothDevice browser api but it is not widely supported.
-  /// Speaker defaults to true based on default of deprecated method [setSpeakerphoneOn]
-  @override
-  Future<Map<String, dynamic>> getAudioSettings() {
-    return Future.value({
-      'speakerphoneEnabled': true,
-      'bluetoothPreferred': false,
-    });
-  }
-
-  /// No-op on web as there is no official way to do this on web.
-  @override
-  Future setAudioSettings(bool speakerphoneEnabled, bool bluetoothPreferred) {
-    return Future.value(true);
-  }
-
   static String _getObjectFit(VideoRenderMode mode) {
     switch (mode) {
       case VideoRenderMode.FILL:
@@ -379,6 +354,7 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
         return 'cover';
     }
   }
+
   //#endregion
 
   //#region Streams
@@ -410,11 +386,6 @@ class ProgrammableVideoPlugin extends ProgrammableVideoPlatform {
   @override
   Stream<dynamic> loggingStream() {
     return _loggingStreamController.stream;
-  }
-
-  @override
-  Stream<BaseAudioNotificationEvent> audioNotificationStream() {
-    return _audioNotificationStreamController.stream;
   }
 //#endregion
 }
